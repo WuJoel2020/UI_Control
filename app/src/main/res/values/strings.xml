@@ -15,4 +15,6 @@
     <string name="male_msg">男</string>
     <string name="female_msg">女</string>
     <string name="icon_msg">light</string>
+    <string name="off">关</string>
+    <string name="on">开</string>
 </resources>

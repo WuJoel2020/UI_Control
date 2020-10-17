@@ -1,24 +1,35 @@
 package com.example.ui_control;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.FileObserver;
-import android.provider.MediaStore;
-import android.text.style.LineHeightSpan;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.Toast;
+import android.widget.ToggleButton;
+
+import com.lljjcoder.Interface.OnCityItemClickListener;
+import com.lljjcoder.bean.CityBean;
+import com.lljjcoder.bean.DistrictBean;
+import com.lljjcoder.bean.ProvinceBean;
+import com.lljjcoder.citywheel.CityConfig;
+import com.lljjcoder.style.citylist.Toast.ToastUtils;
+import com.lljjcoder.style.citypickerview.CityPickerView;
 
 public class MainActivity extends AppCompatActivity {
-
+    int a = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,20 +88,128 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(
-                MainActivity.this, android.R.layout.simple_list_item_1, data);
+        // Item的处理
+        // 使用适配器实现内容绑定
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_list_item_1, ItemData);
         ListView listView = (ListView) findViewById(R.id.list_view);
         listView.setAdapter(adapter);
-//        listView.setOnItemClickListener(new AdapterView.OnItemClickListener(){
-//            @Override
-//            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-//                data.get(position);
-//                Toast.makeText(MainActivity.this,)
-//            }
-//        });
+        // ListView的事件响应
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                String ans = adapterView.getItemAtPosition(position).toString();
+                Toast.makeText(MainActivity.this, "你选中了" + ans, Toast.LENGTH_SHORT).show();
+            }
+        });
 
-        // spinner Items = (Spinner) findViewById(R.id.spinner_class);
+        // Spinner的处理
+        // 获取组件
+        Spinner provinceSpinner = (Spinner) findViewById(R.id.spinnerProvince);
+        final Spinner citySpinner = (Spinner) findViewById(R.id.spinnerCity);
+        final Spinner DistrictSpinner = (Spinner) findViewById(R.id.spinnerDistrict);
+        //绑定适配器和值
+        ArrayAdapter<String> provinceAdapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, province);
+        provinceSpinner.setAdapter(provinceAdapter);
+        provinceSpinner.setSelection(0, true);  // 设置初始选中项
+        ArrayAdapter<String> cityAdapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, city[0]);
+        citySpinner.setAdapter(cityAdapter);
+        citySpinner.setSelection(0, true);
+        ArrayAdapter<String> DistrictAdapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, District[0][0]);
+        DistrictSpinner.setAdapter(DistrictAdapter);
+        DistrictSpinner.setSelection(0, true);
+        final Integer[] provincePosition = {0};
+        // Spinner的事件响应
+        provinceSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                ArrayAdapter<String> cityAdapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, city[i]);
+                citySpinner.setAdapter(cityAdapter);
+                provincePosition[0] = i;
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
+        citySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                ArrayAdapter<String> DistrictAdapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, District[provincePosition[0]][i]);
+                DistrictSpinner.setAdapter(DistrictAdapter);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+        // ToggleButton的处理
+        ToggleButton toggleButton = (ToggleButton) findViewById(R.id.toggleButtonSwitch);
+        final ImageView imageView = (ImageView) findViewById(R.id.imageViewLight);
+        toggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                if (isChecked)
+                    imageView.setImageResource(R.drawable.on);
+                else
+                    imageView.setImageResource(R.drawable.off);
+            }
+        });
+
+        city();
     }
 
-    private String[] data = {"Item1", "Item2", "Item3", "Item4"};
+    // Item的数据
+    private String[] ItemData = {"Item1", "Item2", "Item3", "Item4"};
+
+    // Spinner的数据
+    private String[] province = new String[]{"不限", "浙江", "广东"};
+    private String[][] city = new String[][]{
+            {"不限"},
+            {"不限", "杭州市", "舟山市", "金华市"},  // 浙江省
+            {"不限", "广州市", "湛江市", "珠海市"},  // 广东省
+    };
+    private String[][][] District = new String[][][]{
+            {{"不限"}},
+            // 浙江省
+            {{"不限"}, {"不限", "西湖区", "余杭区", "上城区"},  // 杭州
+                    {"不限", "定海区", "普陀区"},  // 舟山
+                    {"不限", "兰溪", "义乌", "东阳"}  // 金华
+            },
+            // 广东省
+            {{"不限"}, {"不限", "海珠区", "越秀区", "白云区"},  // 广州
+                    {"不限", "霞山区", "坡头区"},  // 湛江
+                    {"不限", "香洲区", "斗门区", "金湾区"}, // 珠海
+            }
+    };
+
+    public void city() {
+        final CityPickerView mPicker = new CityPickerView();
+        mPicker.init(MainActivity.this);
+        //添加默认的配置
+        CityConfig cityConfig = new CityConfig.Builder().build();
+        mPicker.setConfig(cityConfig);
+
+        final EditText editCity = findViewById(R.id.edit_city);
+        editCity.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //监听选择点击事件及返回结果
+                mPicker.setOnCityItemClickListener(new OnCityItemClickListener() {
+                    @Override
+                    public void onSelected(ProvinceBean province, CityBean city, DistrictBean district) {
+                        Toast.makeText(MainActivity.this, province + " - " + city + " - " + district, Toast.LENGTH_LONG).show();
+                    }
+
+                    @Override
+                    public void onCancel() {
+                        ToastUtils.showLongToast(MainActivity.this, "已取消");
+                    }
+                });
+                mPicker.showCityPicker();
+            }
+        });
+    }
 }
